@@ -18,5 +18,5 @@ const createUser = (): void => {
 };
 
 export default function Home() {
-  return (<button onClick={createUser}>NICE</button>);
+  return (<button onClick={createUser}>Sign Up</button>);
 }
