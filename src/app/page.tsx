@@ -1,34 +1,28 @@
 'use client';
 
 import { auth, db } from "@/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
 
-import { addDoc, collection, doc, setDoc } from "firebase/firestore";
-
-const email = "emailstarter@google.com"
-
-const createUser = (): void => {
-   createUserWithEmailAndPassword(auth, email, "password")
-   .then((userCredential) => {
-     // Signed up
-     const user = userCredential.user;
-     console.log("Success: User created");
-
-     // Add a new document in collection "Users"
-    addDoc(collection(db, "Users"), {
-      email: email
-    });
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 
+function LoginUser() {
+  signInWithEmailAndPassword(auth, "pojimmydoer@google.com", "DoDo!12345").then((userCredential) => {
+    // Signed in 
+    const user = userCredential.user;
+    console.log("Logged in", user.email)
+    // ...
+  })
+  .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    console.log("Error, User not logged in", errorCode, errorMessage)
+  });
+}
 
-   })
-   .catch((error) => {
-     const errorCode = error.code;
-     const errorMessage = error.message;
-     console.log( (errorCode), "\n", (errorMessage), "Error, User not created")
-   });
-};
 
-export default function Home() {
-  return (<button onClick={createUser}>Sign Up</button>);
+export default function Login() {
+  return (
+    <button onClick={() =>LoginUser() }>Login
+  </button>
+)
 }
