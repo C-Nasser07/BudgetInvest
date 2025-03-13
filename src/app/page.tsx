@@ -4,9 +4,14 @@ import { auth, db } from "@/firebase";
 
 import { signInWithEmailAndPassword } from "firebase/auth";
 
+import { TextField } from "@mui/material";
 
-function LoginUser() {
-  signInWithEmailAndPassword(auth, "pojimmydoer@google.com", "DoDo!12345").then((userCredential) => {
+import { useState } from "react";
+import { JoinLeft } from "@mui/icons-material";
+
+
+const LoginUser = async (email: string, password: string): Promise<void> => {
+  signInWithEmailAndPassword(auth, email, password).then((userCredential) => {
     // Signed in 
     const user = userCredential.user;
     console.log("Logged in", user.email)
@@ -20,9 +25,31 @@ function LoginUser() {
 }
 
 
-export default function Login() {
+export default function Home() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   return (
-    <button onClick={() =>LoginUser() }>Login
+ <div> <button onClick={() => LoginUser(email, password)}>Sign In ;
   </button>
+
+ <TextField
+  id="email"
+  label="Email Address"
+  name="email"
+  autoFocus
+  value={email}
+onChange={(e) => setEmail(e.target.value)}
+/>
+
+<TextField
+  id="password"
+  label="Password"
+  name="password"
+  type="password"
+  autoFocus
+  value={password}
+onChange={(e) => setPassword(e.target.value)}
+/>
+</div>
 )
 }
