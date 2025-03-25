@@ -45,6 +45,8 @@ export default function Home() {
   const [ticker, setTicker] = useState("");
   const [vol, setVol] = useState(0);
   const [trades, setTrades] = useState<{ ticker: string; vol: number; entryPoint: Timestamp }[]>([]);
+  const [budget, setBudget] = useState(0)
+  const [errorMessage, seterrorMessage] = useState("")
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
@@ -54,16 +56,17 @@ export default function Home() {
     });
   }, []);
   useEffect(() => {
-    getAllTrades()
+    updateDatabase()
   }, [user]);
 
-  const makeTrade = () => {
+  const makeTrade = async() => {
     if (user) {
-      buyStock(ticker, vol, user)
+      const message = await buyStock(ticker, vol, user, budget);
+      seterrorMessage(message);
     }
-    getAllTrades();
+    updateDatabase();
   }
-  const getAllTrades = async () => {
+  const updateDatabase = async () => {
     if (user) {
       const usersRef = collection(db, "Users");
       // Create a query against the collection
@@ -80,6 +83,7 @@ export default function Home() {
           const docsnap = await getDoc(docref);
           if (docsnap.exists()) {
             setTrades(docsnap.data() ['trades'])
+            setBudget(docsnap.data() ['budget'])
           }
         }
       }
@@ -90,6 +94,7 @@ export default function Home() {
       <div>
         <h1>Welcome, {user.email}!</h1>
         <div className="mt-4">
+        <h2>Current Budget: {budget}</h2>
         <h2>Current Trades:</h2>
         <ul>
           {trades.map((trade, index) => (
@@ -117,6 +122,7 @@ export default function Home() {
         placeholder="Enter volume"
         className="mb-4 p-2 border border-gray-300 rounded"
         />
+        <p>{errorMessage}</p>
 
         <button onClick={() => makeTrade()}> Buy Stock </button>
         <button onClick={() => auth.signOut()}> Sign Out </button>

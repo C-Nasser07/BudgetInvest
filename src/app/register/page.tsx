@@ -40,6 +40,7 @@ const createUser = async (email: string, username: string, password: string): Pr
         addDoc(collection(db, "Users"), {
           email: email,
           username: username,
+          budget: 100000
         });
 
       })

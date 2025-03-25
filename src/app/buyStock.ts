@@ -12,20 +12,29 @@ import { NoEncryption } from "@mui/icons-material";
 const USEAPI = false;
 
 
-export const buyStock = async (ticker: string, vol: number, user: User): Promise<void> => {
+export const buyStock = async (ticker: string, vol: number, user: User, budget: number): Promise<string> => {
+  var error = ("Unknown error")
   try {
+    if (vol <= 0) {
+      return "Volume should be positive"
+    }
+    var price = 0
     if (USEAPI) {
       const response = await fetch(
       'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=CFLT7E6NIG77NGT0'
       );
     const data = await response.json();
     console.log(data);
-    const price = parseFloat(data["Global Quote"]["05. price"]);
+    price = parseFloat(data["Global Quote"]["05. price"]);
     }
     else {
-      const price = 100
+      price = 100
     }
-    
+    if ((budget - price * vol) < 0) {
+      error = "Insufficient Budget"
+      return error
+    }
+
     const usersRef = collection(db, "Users");
 // Create a query against the collection
   const q = query(usersRef,
@@ -45,11 +54,14 @@ export const buyStock = async (ticker: string, vol: number, user: User): Promise
           vol : vol,
           entryPoint : Timestamp.fromDate(currentdate),
           exitPoint : null
-        })
+        }),
+        budget: budget - (price * vol)
       })
     }
+return "success"
 
   } catch (err) {
     console.log(err);
+    return error
   }
 }
