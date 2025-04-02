@@ -11,7 +11,18 @@ import { TextField } from "@mui/material";
 import { useState } from "react";
 import { JoinLeft } from "@mui/icons-material";
 
+import { Trade } from "@/app/trade";
 
+
+const addTheDoc = async (email: string, username: string): Promise<void> => {
+  // Add a new document in collection "Users"
+  await addDoc(collection(db, "Users"), {
+    email: email,
+    username: username,
+    budget: 100000,
+    trades: []
+  });
+}
 
 const createUser = async (email: string, username: string, password: string): Promise<void> => {
   const usersRef = collection(db, "Users");
@@ -37,11 +48,7 @@ const createUser = async (email: string, username: string, password: string): Pr
         console.log("Success: User created");
 
         // Add a new document in collection "Users"
-        addDoc(collection(db, "Users"), {
-          email: email,
-          username: username,
-          budget: 100000
-        });
+        addTheDoc(email, username);
 
       })
       .catch((error) => {

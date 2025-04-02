@@ -18,9 +18,13 @@ import { getAuth, deleteUser } from "firebase/auth";
 // Delete user documents in Cloud Firestore
 import { doc, deleteDoc, collection, query, where, getDocs, getDoc, Timestamp } from "firebase/firestore";
 
+import {buyStock} from "@/app/buyStock";
 
-import {buyStock} from "@/app/buyStock"
+import { sellStock } from "@/app/sellStock";
+
 import { TextField } from "@mui/material";
+
+import { Trade } from "@/app/trade";
 
 
 const handledelete = async (user: User): Promise<void> => {deleteUser(user);
@@ -44,7 +48,7 @@ export default function Home() {
 
   const [ticker, setTicker] = useState("");
   const [vol, setVol] = useState(0);
-  const [trades, setTrades] = useState<{ ticker: string; vol: number; entryPoint: Timestamp }[]>([]);
+  const [trades, setTrades] = useState< Trade[] >([]);
   const [budget, setBudget] = useState(0)
   const [errorMessage, seterrorMessage] = useState("")
 
@@ -56,17 +60,25 @@ export default function Home() {
     });
   }, []);
   useEffect(() => {
-    updateDatabase()
+    updateFromFirestore()
   }, [user]);
 
-  const makeTrade = async() => {
+  const buyAndUpdate = async() => {
     if (user) {
       const message = await buyStock(ticker, vol, user, budget);
       seterrorMessage(message);
     }
-    updateDatabase();
+    updateFromFirestore();
   }
-  const updateDatabase = async () => {
+
+  const sellAndUpdate = async(index: number) => {
+    if (user) {
+      await sellStock( user, trades, budget, index ); updateFromFirestore()
+    }
+  }
+
+
+  const updateFromFirestore = async () => {
     if (user) {
       const usersRef = collection(db, "Users");
       // Create a query against the collection
@@ -101,6 +113,11 @@ export default function Home() {
             <li key={index}>
               {trade.vol} shares of {trade.ticker} at
               {trade.entryPoint.toDate().toLocaleString()}
+              for {
+                trade.buyAmount
+              }
+              
+              {!trade.exitPoint ?<button onClick={() => { sellAndUpdate(index) } }>Sell Stock</button>: <p> exited at { trade.exitPoint.toDate().toLocaleString() }, { trade.tradeReturn } </p> }
             </li>
           ))}
         </ul>
@@ -124,7 +141,7 @@ export default function Home() {
         />
         <p>{errorMessage}</p>
 
-        <button onClick={() => makeTrade()}> Buy Stock </button>
+        <button onClick={() => buyAndUpdate()}> Buy Stock </button>
         <button onClick={() => auth.signOut()}> Sign Out </button>
         <button onClick={() => handledelete(user)}> Delete User </button>
       </div>
