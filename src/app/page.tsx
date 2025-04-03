@@ -22,6 +22,8 @@ import {buyStock} from "@/app/buyStock";
 
 import { sellStock } from "@/app/sellStock";
 
+import { getStockPrice } from "@/app/getStockPrice";
+
 import { TextField } from "@mui/material";
 
 import { Trade } from "@/app/trade";
@@ -49,6 +51,7 @@ export default function Home() {
   const [ticker, setTicker] = useState("");
   const [vol, setVol] = useState(0);
   const [trades, setTrades] = useState< Trade[] >([]);
+  const [pnls, setPnls] = useState< Number[] >([]);
   const [budget, setBudget] = useState(0)
   const [errorMessage, seterrorMessage] = useState("")
 
@@ -98,6 +101,18 @@ export default function Home() {
             setBudget(docsnap.data() ['budget'])
           }
         }
+        const pnls = await Promise.all(
+          trades.map(async (trade) => {
+            const price = trade.exitPoint ? 0 : await getStockPrice(trade.ticker);
+            const profit = price - trade.buyAmount;
+            const percentageReturn = (profit / trade.buyAmount) * 100;
+            return percentageReturn;
+          })
+        );
+        setPnls(pnls);
+        // setPnls(trades.map((trade,_) => (
+        //   trade.exitPoint?0:(await getStockPrice(trade.ticker)-trade.buyAmount)
+        // )))
       }
   }
 
@@ -117,7 +132,11 @@ export default function Home() {
                 trade.buyAmount
               }
               
-              {!trade.exitPoint ?<button onClick={() => { sellAndUpdate(index) } }>Sell Stock</button>: <p> exited at { trade.exitPoint.toDate().toLocaleString() }, { trade.tradeReturn } </p> }
+              {!trade.exitPoint ?(
+                <div> <button onClick={() => { sellAndUpdate(index) } }>Sell Stock</button>
+                <h2>P/L {pnls[index].toFixed(2)}%</h2>
+                </div>
+                ): <p> exited at { trade.exitPoint.toDate().toLocaleString() }, { trade.tradeReturn } </p> }
             </li>
           ))}
         </ul>
