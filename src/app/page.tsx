@@ -93,22 +93,29 @@ export default function Home() {
       querySnapshot.forEach((doc) => {
         id = doc.id
         });
+        var tradeList: Trade [] = []
         if (id != "") {
           const docref = (doc(db, usersRef.id, id));
           const docsnap = await getDoc(docref);
           if (docsnap.exists()) {
-            setTrades(docsnap.data() ['trades'])
+            tradeList = docsnap.data() ['trades']
+            // Fills Pnls list with 0
+            setPnls(tradeList.map(() => {return 0} ))
+            setTrades(tradeList)
             setBudget(docsnap.data() ['budget'])
           }
         }
+        console.log(trades)
         const pnls = await Promise.all(
-          trades.map(async (trade) => {
+          tradeList.map(async (trade) => {
             const price = trade.exitPoint ? 0 : await getStockPrice(trade.ticker);
-            const profit = price - trade.buyAmount;
+            const profit = price * trade.vol - trade.buyAmount;
             const percentageReturn = (profit / trade.buyAmount) * 100;
-            return percentageReturn;
+            console.log(percentageReturn);
+            return trade.exitPoint? trade.tradeReturn: percentageReturn
           })
         );
+        console.log(pnls);
         setPnls(pnls);
         // setPnls(trades.map((trade,_) => (
         //   trade.exitPoint?0:(await getStockPrice(trade.ticker)-trade.buyAmount)
@@ -122,6 +129,7 @@ export default function Home() {
         <h1>Welcome, {user.email}!</h1>
         <div className="mt-4">
         <h2>Current Budget: {budget}</h2>
+        <h2>Budget PnL: {pnls.map(Number).reduce((acc, curr) => acc + curr, 0)}</h2>
         <h2>Current Trades:</h2>
         <ul>
           {trades.map((trade, index) => (
