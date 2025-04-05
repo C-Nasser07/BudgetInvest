@@ -6,6 +6,8 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 // Create a reference to ... collection
 import { addDoc, collection, query, where, doc, setDoc, getDocs, or, } from "firebase/firestore";
 
+import Link from "next/link";
+
 import { TextField } from "@mui/material";
 
 import { useState } from "react";
@@ -95,36 +97,49 @@ export default function Home() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   return (
- <div> <button onClick={() => createUser(email, username, password)}>Sign Up ;
-  </button>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-6">
+        <h2 className="text-2xl font-bold text-center text-gray-800">Register</h2>
 
- <TextField
-  id="email"
-  label="Email Address"
-  name="email"
-  autoFocus
-  value={email}
-onChange={(e) => setEmail(e.target.value)}
-/>
+        <TextField
+          id="email"
+          label="Email Address"
+          fullWidth
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-<TextField
-  id="username"
-  label="Username"
-  name="username"
-  autoFocus
-  value={username}
-onChange={(e) => setUsername(e.target.value)}
-/>
+        <TextField
+          id="username"
+          label="Username"
+          fullWidth
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
 
-<TextField
-  id="password"
-  label="Password"
-  name="password"
-  type="password"
-  autoFocus
-  value={password}
-onChange={(e) => setPassword(e.target.value)}
-/>
-</div>
-)
+        <TextField
+          id="password"
+          label="Password"
+          type="password"
+          fullWidth
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button
+          onClick={() => createUser(email, username, password)}
+          className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+        >
+          Sign Up
+        </button>
+
+        <p className="text-sm text-center text-gray-600">
+          Already have an account?{" "}
+          <Link href="/" className="text-blue-600 hover:underline">
+            Sign In
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
 }

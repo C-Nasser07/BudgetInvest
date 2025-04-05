@@ -10,8 +10,6 @@ import { doc, updateDoc, arrayUnion, collection, query, where, getDocs, Timestam
 import { NoEncryption } from "@mui/icons-material";
 import { getStockPrice } from "./getStockPrice";
 
-const USEAPI = false;
-
 
 export const buyStock = async (ticker: string, vol: number, user: User, budget: number): Promise<string> => {
   var error = ("Unknown error")

@@ -125,53 +125,101 @@ export default function Home() {
 
   if (user) {
     return (
-      <div>
-        <h1>Welcome, {user.email}!</h1>
-        <div className="mt-4">
-        <h2>Current Budget: {budget}</h2>
-        <h2>Budget PnL: {pnls.map(Number).reduce((acc, curr) => acc + curr, 0)}</h2>
-        <h2>Current Trades:</h2>
-        <ul>
-          {trades.map((trade, index) => (
-            <li key={index}>
-              {trade.vol} shares of {trade.ticker} at
-              {trade.entryPoint.toDate().toLocaleString()}
-              for {
-                trade.buyAmount
-              }
-              
-              {!trade.exitPoint ?(
-                <div> <button onClick={() => { sellAndUpdate(index) } }>Sell Stock</button>
-                <h2>P/L {pnls[index].toFixed(2)}%</h2>
-                </div>
-                ): <p> exited at { trade.exitPoint.toDate().toLocaleString() }, { trade.tradeReturn } </p> }
-            </li>
-          ))}
-        </ul>
-      </div>
+      <div className="max-w-4xl mx-auto p-6 space-y-6 bg-white shadow-xl rounded-2xl">
+  <div className="flex items-center justify-between">
+    <h1 className="text-2xl font-semibold text-gray-800">Welcome, {user.email}!</h1>
+    <div className="space-x-2">
 
-        <TextField
+      <button
+        className="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition"
+        onClick={() => auth.signOut()}
+      >
+        Sign Out
+      </button>
+
+      <button
+        className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
+        onClick={() => handledelete(user)}
+      >
+        Delete User
+      </button>
+    </div>
+  </div>
+
+  <div className="bg-gray-50 p-4 rounded-lg">
+    <h2 className="text-lg font-medium text-gray-700">Account Summary</h2>
+    <div className="mt-2 space-y-1 text-gray-600">
+      <p>Current Budget: <span className="font-semibold">${budget}</span></p>
+      <p>Budget PnL: $<span className={`font-semibold ${pnls.map(Number).reduce((acc, curr) => acc + curr, 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+        {pnls.map(Number).reduce((acc, curr) => acc + curr, 0).toFixed(2)}
+      </span></p>
+    </div>
+  </div>
+
+  <div className="bg-gray-50 p-4 rounded-lg">
+    <h2 className="text-lg font-medium text-gray-700 mb-2">Current Trades</h2>
+    <ul className="space-y-4">
+      {trades.map((trade, index) => (
+        <li key={index} className="p-4 bg-white shadow rounded-lg">
+          <div className="text-gray-700">
+            <p>
+              <span className="font-medium">{trade.vol}</span> shares of <span className="font-semibold">{trade.ticker+" "}</span> 
+              bought at <span className="italic">{trade.entryPoint.toDate().toLocaleString()+" "}</span>
+              for <span className="font-medium">${trade.buyAmount.toFixed(2)}</span>
+            </p>
+
+            {!trade.exitPoint ? (
+              <div className="mt-2 flex items-center justify-between">
+                <p className="text-sm text-gray-500">P/L: <span className={`font-semibold ${Number(pnls[index]) >= 0 ? 'text-green-600' : 'text-red-600'}`}>{pnls[index].toFixed(2)}%</span></p>
+                <button
+                  onClick={() => sellAndUpdate(index)}
+                  className="px-3 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600 transition"
+                >
+                  Sell Stock
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 mt-2">
+                Exited at {trade.exitPoint.toDate().toLocaleString()}, Return: <span className="font-semibold">{trade.tradeReturn.toFixed(2)}</span>
+              </p>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+    <h2 className="text-lg font-medium text-gray-700">Trade Input</h2>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <TextField
         id="ticker"
         label="Ticker"
         name="ticker"
         autoFocus
         value={ticker}
         onChange={(e) => setTicker(e.target.value)}
-        />
-
-        <input
-        type="vol"
+        className="w-full"
+      />
+      <input
+        type="number"
         value={vol}
         onChange={(e) => setVol(Number(e.target.value))}
         placeholder="Enter volume"
-        className="mb-4 p-2 border border-gray-300 rounded"
-        />
-        <p>{errorMessage}</p>
+        className="w-full p-2 border border-gray-300 rounded-lg"
+      />
+    </div>
+    {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
+  </div>
+  <button
+        className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+        onClick={() => buyAndUpdate()}
+      >
+        Buy Stock
+      </button>
+</div>
 
-        <button onClick={() => buyAndUpdate()}> Buy Stock </button>
-        <button onClick={() => auth.signOut()}> Sign Out </button>
-        <button onClick={() => handledelete(user)}> Delete User </button>
-      </div>
+
     );
   }
  

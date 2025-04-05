@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 
-const USEAPI = false;
+const USEAPI = true;
 
 
 export const getStockPrice = async(ticker: string): Promise<number> => {
