@@ -16,17 +16,17 @@ import { JoinLeft } from "@mui/icons-material";
 import { Trade } from "@/app/trade";
 
 
-const addTheDoc = async (email: string, username: string): Promise<void> => {
+const addTheDoc = async (email: string, username: string, budget: Number): Promise<void> => {
   // Add a new document in collection "Users"
   await addDoc(collection(db, "Users"), {
     email: email,
     username: username,
-    budget: 100000,
+    budget: budget,
     trades: []
   });
 }
 
-const createUser = async (email: string, username: string, password: string): Promise<void> => {
+const createUser = async (email: string, username: string, password: string, budget: Number): Promise<void> => {
   const usersRef = collection(db, "Users");
 
   // Create a query against the collection
@@ -50,7 +50,7 @@ const createUser = async (email: string, username: string, password: string): Pr
         console.log("Success: User created");
 
         // Add a new document in collection "Users"
-        addTheDoc(email, username);
+        addTheDoc(email, username, budget);
 
       })
       .catch((error) => {
@@ -96,6 +96,7 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [budget, setBudget] = useState(100000);
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-6">
@@ -126,8 +127,20 @@ export default function Home() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
+        <p className="text-sm text-gray-600">
+          Starting Budget
+        </p>
+        <input
+          type="number"
+          id="budget"
+          value={budget}
+          onChange={(e) => setBudget(Number(e.target.value))}
+          placeholder="Enter Starting Budget"
+          className="w-full p-2 border border-gray-300 rounded-lg"
+        />
+
         <button
-          onClick={() => createUser(email, username, password)}
+          onClick={() => createUser(email, username, password, budget)}
           className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
         >
           Sign Up
