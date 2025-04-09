@@ -10,6 +10,7 @@ import Login from "@/app/login/page";
 
 import { useEffect, useState } from "react";
 
+import Link from "next/link";
 
 // Delete user in Firebase Authentication
 import { getAuth, deleteUser } from "firebase/auth";
@@ -24,7 +25,7 @@ import { sellStock } from "@/app/sellStock";
 
 import { getStockPrice } from "@/app/getStockPrice";
 
-import { TextField } from "@mui/material";
+import { dividerClasses, TextField } from "@mui/material";
 
 import { Trade } from "@/app/trade";
 
@@ -54,6 +55,10 @@ export default function Home() {
   const [pnls, setPnls] = useState< Number[] >([]);
   const [budget, setBudget] = useState(0)
   const [errorMessage, seterrorMessage] = useState("")
+  const [userId, setUserId] = useState("")
+  const [checkButtonState, setCheckButtonState] = useState(false)
+  const [share, setShare] = useState("")
+  const [otherUsersPnl, setOtherUsersPnl] = useState(0)
 
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
@@ -80,9 +85,29 @@ export default function Home() {
     }
   }
 
+  const shareGetUserPnl = async (id: string) => {
+    if (id != "") {
+      const usersRef = collection(db, "Users");
+      const docref = (doc(db, usersRef.id, id));
+      const docsnap = await getDoc(docref);
+      if (docsnap.exists()) {
+        const tradeList: Trade[] = docsnap.data() ['trades']
+        var total = 0
+        await Promise.all(
+          tradeList.map(async (trade) => {
+            const price = trade.exitPoint ? 0 : await getStockPrice(trade.ticker);
+            const profit = price * trade.vol - trade.buyAmount;
+            total+= trade.exitPoint? trade.tradeReturn: profit
+          })
+        );
+        setOtherUsersPnl(total)
+      }
+  }}
+
 
   const updateFromFirestore = async () => {
     if (user) {
+    // Attempt to find user's document with email
       const usersRef = collection(db, "Users");
       // Create a query against the collection
       const q = query(usersRef,
@@ -93,34 +118,33 @@ export default function Home() {
       querySnapshot.forEach((doc) => {
         id = doc.id
         });
-        var tradeList: Trade [] = []
-        if (id != "") {
-          const docref = (doc(db, usersRef.id, id));
-          const docsnap = await getDoc(docref);
-          if (docsnap.exists()) {
-            tradeList = docsnap.data() ['trades']
-            // Fills Pnls list with 0
-            setPnls(tradeList.map(() => {return 0} ))
-            setTrades(tradeList)
-            setBudget(docsnap.data() ['budget'])
-          }
+      var tradeList: Trade [] = []
+      if (id != "") {
+        const docref = (doc(db, usersRef.id, id));
+        const docsnap = await getDoc(docref);
+        if (docsnap.exists()) {
+          tradeList = docsnap.data() ['trades']
+          // Fills Pnls list with 0
+          setPnls(tradeList.map(() => {return 0} ))
+          setTrades(tradeList)
+          setBudget(docsnap.data() ['budget'])
+          setUserId(id)
         }
-        console.log(trades)
-        const pnls = await Promise.all(
-          tradeList.map(async (trade) => {
-            const price = trade.exitPoint ? 0 : await getStockPrice(trade.ticker);
-            const profit = price * trade.vol - trade.buyAmount;
-            const percentageReturn = (profit / trade.buyAmount) * 100;
-            console.log(percentageReturn);
-            return trade.exitPoint? trade.tradeReturn: percentageReturn
-          })
-        );
-        console.log(pnls);
-        setPnls(pnls);
-        // setPnls(trades.map((trade,_) => (
-        //   trade.exitPoint?0:(await getStockPrice(trade.ticker)-trade.buyAmount)
-        // )))
       }
+      console.log(trades)
+      const pnls = await Promise.all(
+        tradeList.map(async (trade) => {
+          const price = trade.exitPoint ? 0 : await getStockPrice(trade.ticker);
+          const profit = price * trade.vol - trade.buyAmount;
+          return trade.exitPoint? trade.tradeReturn: profit
+        })
+      );
+      console.log(pnls);
+      setPnls(pnls);
+      // setPnls(trades.map((trade,_) => (
+      //   trade.exitPoint?0:(await getStockPrice(trade.ticker)-trade.buyAmount)
+      // )))
+    }
   }
 
   if (user) {
@@ -129,6 +153,23 @@ export default function Home() {
   <div className="flex items-center justify-between">
     <h1 className="text-2xl font-semibold text-gray-800">Welcome, {user.email}!</h1>
     <div className="space-x-2">
+      {checkButtonState ? (
+        <p>
+          {userId}
+        </p>
+      ): (
+      <button
+        className="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition"
+        onClick={() => setCheckButtonState(true) }
+      >
+        Share
+      </button>
+    )}
+      <Link
+        className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition"
+        href="https://www.investopedia.com/trading-basic-education-4689651">
+        Learn
+        </Link>
 
       <button
         className="px-4 py-2 rounded-lg bg-gray-500 text-white hover:bg-gray-600 transition"
@@ -149,7 +190,7 @@ export default function Home() {
   <div className="bg-gray-50 p-4 rounded-lg">
     <h2 className="text-lg font-medium text-gray-700">Account Summary</h2>
     <div className="mt-2 space-y-1 text-gray-600">
-      <p>Current Budget: <span className="font-semibold">${budget}</span></p>
+      <p>Current Budget: <span className="font-semibold">${budget.toFixed(2)}</span></p>
       <p>Budget PnL: $<span className={`font-semibold ${pnls.map(Number).reduce((acc, curr) => acc + curr, 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
         {pnls.map(Number).reduce((acc, curr) => acc + curr, 0).toFixed(2)}
       </span></p>
@@ -170,7 +211,7 @@ export default function Home() {
 
             {!trade.exitPoint ? (
               <div className="mt-2 flex items-center justify-between">
-                <p className="text-sm text-gray-500">P/L: <span className={`font-semibold ${Number(pnls[index]) >= 0 ? 'text-green-600' : 'text-red-600'}`}>{pnls[index].toFixed(2)}%</span></p>
+                <p className="text-sm text-gray-500">P/L: $<span className={`font-semibold ${Number(pnls[index]) >= 0 ? 'text-green-600' : 'text-red-600'}`}>{pnls[index].toFixed(2)}</span></p>
                 <button
                   onClick={() => sellAndUpdate(index)}
                   className="px-3 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600 transition"
@@ -216,7 +257,31 @@ export default function Home() {
         onClick={() => buyAndUpdate()}
       >
         Buy Stock
-      </button>
+  </button>
+
+    <TextField
+          id="share"
+          label="share"
+          name="share"
+          autoFocus
+          value={share}
+          onChange={(e) => setShare(e.target.value)}
+          className="w-full"
+    />
+
+    <button
+    className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
+        onClick={() => shareGetUserPnl(share)}
+      >
+        Get User's PnL
+    </button>
+    {(otherUsersPnl != 0)
+    ?(
+    <p className={`font-semibold ${otherUsersPnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+      ${otherUsersPnl.toFixed(2)}
+    </p>
+    ) : (<div></div>)
+  }
 </div>
 
 

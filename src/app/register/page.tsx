@@ -19,7 +19,7 @@ import { Trade } from "@/app/trade";
 const addTheDoc = async (email: string, username: string, budget: Number): Promise<void> => {
   // Add a new document in collection "Users"
   await addDoc(collection(db, "Users"), {
-    email: email,
+    email: email.toLowerCase(),
     username: username,
     budget: budget,
     trades: []

@@ -17,7 +17,8 @@ export const buyStock = async (ticker: string, vol: number, user: User, budget: 
     if (vol <= 0) {
       return "Volume should be positive"
     }
-    const price = await getStockPrice(ticker);
+    var price = await getStockPrice(ticker);
+    price+=price*0.01
 
     if ((budget - price * vol) < 0) {
       error = "Insufficient Budget"
