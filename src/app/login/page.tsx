@@ -11,13 +11,13 @@ import { TextField } from "@mui/material";
 import { useState } from "react";
 import { JoinLeft } from "@mui/icons-material";
 
-
+// Use Firebase Authentication to sign in a user with email and password.
+// Console logs success or error message
 const LoginUser = async (email: string, password: string): Promise<void> => {
   signInWithEmailAndPassword(auth, email, password).then((userCredential) => {
     // Signed in 
     const user = userCredential.user;
     console.log("Logged in", user.email)
-    // ...
   })
   .catch((error) => {
     const errorCode = error.code;
@@ -28,9 +28,10 @@ const LoginUser = async (email: string, password: string): Promise<void> => {
 
 
 export default function Login() {
+  // State variables
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  // React page layout
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-6">

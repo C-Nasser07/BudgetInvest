@@ -3,7 +3,6 @@
 import { auth, db } from "@/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 
-// Create a reference to ... collection
 import { addDoc, collection, query, where, doc, setDoc, getDocs, or, } from "firebase/firestore";
 
 import Link from "next/link";
@@ -15,7 +14,7 @@ import { JoinLeft } from "@mui/icons-material";
 
 import { Trade } from "@/app/trade";
 
-
+// Create a user in Firestore with their email, username, and starting budget, returns void
 const addTheDoc = async (email: string, username: string, budget: Number): Promise<void> => {
   // Add a new document in collection "Users"
   await addDoc(collection(db, "Users"), {
@@ -25,7 +24,7 @@ const addTheDoc = async (email: string, username: string, budget: Number): Promi
     trades: []
   });
 }
-
+// Creates a user in Authentication using email and password and calls addTheDoc, returns void
 const createUser = async (email: string, username: string, password: string, budget: Number): Promise<void> => {
   const usersRef = collection(db, "Users");
 
@@ -34,8 +33,8 @@ const createUser = async (email: string, username: string, password: string, bud
     or(where("email", "==", email),
     where("username", "==", username)));
   
-  // Only execute user creation if no conflicting emails or usernames
   const querySnapshot = await getDocs(q);
+  // Only execute user creation if no conflicting emails or usernames
   if (querySnapshot.empty) {
 
     // Only execute user creation if password is secure
@@ -54,6 +53,7 @@ const createUser = async (email: string, username: string, password: string, bud
 
       })
       .catch((error) => {
+        // If error creating user in Authentication, log error code and error message
         const errorCode = error.code;
         const errorMessage = error.message;
         console.log( (errorCode), "\n", (errorMessage), "Error, User not created")
@@ -64,7 +64,7 @@ const createUser = async (email: string, username: string, password: string, bud
   }
 };
 
-
+// Takes in password and returns list of potential validation errors
 function validatePassword(password: string): string[] {
   const errors: string[] = [];
 
@@ -91,12 +91,13 @@ function validatePassword(password: string): string[] {
   return errors;
 }
 
-
 export default function Home() {
+  // State variables
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [budget, setBudget] = useState(100000);
+  // React page layout
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-6">

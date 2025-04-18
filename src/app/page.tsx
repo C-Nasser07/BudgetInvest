@@ -29,24 +29,31 @@ import { dividerClasses, TextField } from "@mui/material";
 
 import { Trade } from "@/app/trade";
 
-
-const handledelete = async (user: User): Promise<void> => {deleteUser(user);
+// Takes in user and attempts to delete them from Authentication and remove Firestore doc.
+// Returns void
+const handledelete = async (user: User): Promise<void> => {
+  // Delete user from Authentication
+  deleteUser(user);
   const usersRef = collection(db, "Users");
-// Create a query against the collection
+  // Create a query against the collection
   const q = query(usersRef,
     where("email", "==", user.email));
   const querySnapshot = await getDocs(q);
-// doc.data() is never undefined for query doc snapshots
+  // doc.data() is never undefined for query doc snapshots
   var id = "";
+  // Snapshot will only have one doc
   querySnapshot.forEach((doc) => {
     id = doc.id
-    });
-    if (id != "") {
-     await deleteDoc(doc(db, usersRef.id, id));
     }
+  );
+  // If doc exists, delete it
+  if (id != "") {
+    await deleteDoc(doc(db, usersRef.id, id));
+  }
 }
 
 export default function Home() {
+  // State variables
   const [user, setloggedin] = useState<User | null >(null);
 
   const [ticker, setTicker] = useState("");
@@ -60,40 +67,51 @@ export default function Home() {
   const [share, setShare] = useState("")
   const [otherUsersPnl, setOtherUsersPnl] = useState(0)
 
+  // On page load, add Authentication listener
   useEffect(() => {
+    // If Auth changes, log the user in
     onAuthStateChanged(auth, (user) => {
       setloggedin(user);
       console.log("Success")
   
     });
   }, []);
+
+  // When user changes, call updateFromFirestore
   useEffect(() => {
     updateFromFirestore()
   }, [user]);
 
+  // If user is logged in, execute buyStock and updateFromFirestore
   const buyAndUpdate = async() => {
     if (user) {
       const message = await buyStock(ticker, vol, user, budget);
+      // Store error message in state variable to be shown to user
       seterrorMessage(message);
     }
     updateFromFirestore();
   }
 
+  // If user is logged in, execute sellStock and updateFromFirestore
   const sellAndUpdate = async(index: number) => {
     if (user) {
       await sellStock( user, trades, budget, index ); updateFromFirestore()
     }
   }
 
+  // Get other user's PnL given their user id code
   const shareGetUserPnl = async (id: string) => {
     if (id != "") {
       const usersRef = collection(db, "Users");
+      // Get docref using other user's id code
       const docref = (doc(db, usersRef.id, id));
       const docsnap = await getDoc(docref);
+      // If doc exists, calculate pnl
       if (docsnap.exists()) {
         const tradeList: Trade[] = docsnap.data() ['trades']
         var total = 0
         await Promise.all(
+          // Calculate pnl by summing returns or expected returns from all trades
           tradeList.map(async (trade) => {
             const price = trade.exitPoint ? 0 : await getStockPrice(trade.ticker);
             const profit = price * trade.vol - trade.buyAmount;
@@ -104,10 +122,10 @@ export default function Home() {
       }
   }}
 
-
+  // Called to refresh data from Firestore
   const updateFromFirestore = async () => {
     if (user) {
-    // Attempt to find user's document with email
+      // Attempt to find user's document with email
       const usersRef = collection(db, "Users");
       // Create a query against the collection
       const q = query(usersRef,
@@ -115,6 +133,7 @@ export default function Home() {
       const querySnapshot = await getDocs(q);
       // doc.data() is never undefined for query doc snapshots
       var id = "";
+      // Snapshot will only contain one doc
       querySnapshot.forEach((doc) => {
         id = doc.id
         });
@@ -122,6 +141,7 @@ export default function Home() {
       if (id != "") {
         const docref = (doc(db, usersRef.id, id));
         const docsnap = await getDoc(docref);
+        // If document data is retrieved successfully, set state variables
         if (docsnap.exists()) {
           tradeList = docsnap.data() ['trades']
           // Fills Pnls list with 0
@@ -132,6 +152,7 @@ export default function Home() {
         }
       }
       console.log(trades)
+      // Populate pnls list with completed trade return, or with current trade value
       const pnls = await Promise.all(
         tradeList.map(async (trade) => {
           const price = trade.exitPoint ? 0 : await getStockPrice(trade.ticker);
@@ -141,12 +162,10 @@ export default function Home() {
       );
       console.log(pnls);
       setPnls(pnls);
-      // setPnls(trades.map((trade,_) => (
-      //   trade.exitPoint?0:(await getStockPrice(trade.ticker)-trade.buyAmount)
-      // )))
     }
   }
 
+  // If user logged in, return dashboard React page
   if (user) {
     return (
       <div className="max-w-4xl mx-auto p-6 space-y-6 bg-white shadow-xl rounded-2xl">
@@ -283,25 +302,9 @@ export default function Home() {
     ) : (<div></div>)
   }
 </div>
-
-
     );
   }
  
+  // If user is not logged in, display Login page
   return (<Login />)
-  // onAuthStateChanged(auth, (user) => {
-  //   if (user) {
-  //     // User is signed in, see docs for a list of available properties
-  //     // https://firebase.google.com/docs/reference/js/auth.user
-  //     const uid = user.uid;
-  //     return (
-  //       <p>Home</p>
-  //   )
-  //     // ...
-  //   } else {
-  //     return (Login)
-  //     // User is signed out
-  //     // ...
-  //   }
-  // });
 }
